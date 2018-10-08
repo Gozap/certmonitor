@@ -51,6 +51,7 @@ A simple website certificate monitor tool.`,
 
 		if len(args) > 0 {
 			cmd.Help()
+			return
 		}
 		monitor.Start()
 	},

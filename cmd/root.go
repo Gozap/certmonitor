@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Sirupsen/logrus"
+
 	"github.com/Gozap/certmonitor/pkg/monitor"
 
 	"github.com/Gozap/certmonitor/pkg/alarm"
@@ -29,6 +31,7 @@ import (
 )
 
 var cfgFile string
+var debug bool
 
 var rootCmd = &cobra.Command{
 	Use:   "certmonitor",
@@ -36,6 +39,11 @@ var rootCmd = &cobra.Command{
 	Long: `
 A simple website certificate monitor tool.`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		if debug {
+			logrus.SetLevel(logrus.DebugLevel)
+		}
+
 		if len(args) > 0 {
 			cmd.Help()
 		}
@@ -52,7 +60,8 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is certmonitor.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "certmonitor.yaml", "config file (default is certmonitor.yaml)")
+	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "debug")
 }
 
 func initConfig() {

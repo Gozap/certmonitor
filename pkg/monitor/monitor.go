@@ -36,6 +36,9 @@ func ExampleConfig() Config {
 }
 
 func check(address string, beforeTime time.Duration) error {
+
+	logrus.Infof("Check website [%s]...", address)
+
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -48,11 +51,11 @@ func check(address string, beforeTime time.Duration) error {
 
 	for _, cert := range resp.TLS.PeerCertificates {
 		if !cert.NotAfter.After(time.Now()) {
-			return errors.New(fmt.Sprintf("Website [%s] certificate has expired: %s", address, cert.NotAfter.Format("2006-01-02 15:04:05")))
+			return errors.New(fmt.Sprintf("Website [%s] certificate has expired: %s", address, cert.NotAfter.Local().Format("2006-01-02 15:04:05")))
 		}
 
 		if cert.NotAfter.Sub(time.Now()) < beforeTime {
-			return errors.New(fmt.Sprintf("Website [%s] certificate will expire, remaining time: %sh", address, cert.NotAfter.Sub(time.Now()).Hours()))
+			return errors.New(fmt.Sprintf("Website [%s] certificate will expire, remaining time: %fh", address, cert.NotAfter.Sub(time.Now()).Hours()))
 		}
 	}
 
@@ -77,4 +80,6 @@ func Start() {
 			}
 		})
 	}
+	c.Start()
+	select {}
 }

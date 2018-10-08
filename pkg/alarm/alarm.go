@@ -24,13 +24,16 @@ import (
 )
 
 func Alarm(message string) {
-	var alarms []Config
-	err := viper.UnmarshalKey("alarms", &alarms)
+
+	logrus.Debugf("Website alarm: %s", message)
+
+	var alarm []Config
+	err := viper.UnmarshalKey("alarm", &alarm)
 	if err != nil {
 		logrus.Printf("Can't parse alarm config: %s", err)
 		return
 	}
-	for _, a := range alarms {
+	for _, a := range alarm {
 		switch strings.ToLower(a.Type) {
 		case "smtp":
 			var s SMTPConfig

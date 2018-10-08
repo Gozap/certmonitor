@@ -40,6 +40,11 @@ var rootCmd = &cobra.Command{
 A simple website certificate monitor tool.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
+		logrus.SetFormatter(&logrus.TextFormatter{
+			FullTimestamp:   true,
+			TimestampFormat: "2006-01-02 15:04:05",
+		})
+
 		if debug {
 			logrus.SetLevel(logrus.DebugLevel)
 		}

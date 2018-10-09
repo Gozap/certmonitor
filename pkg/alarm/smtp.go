@@ -93,9 +93,9 @@ func (cfg *SMTPConfig) composeMsg(to string, subject string, body string) (messa
 	headers["Subject"] = subject
 	// Setup message
 	for k, v := range headers {
-		message += fmt.Sprintf("%s: %s\r", k, v)
+		message += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
-	message += "\r" + body
+	message += "\r\n" + body
 	return message
 }
 

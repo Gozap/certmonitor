@@ -13,6 +13,9 @@ all:
 release: all
 	ghr -u gozap -t $(GITHUB_RELEASE_TOKEN) -replace -recreate --debug $(version) dist
 
+docker: release
+	docker build --build-arg="VERSION=$(version)" -t gozap/certmonitor:$(version) .
+
 clean:
 	rm -rf dist
 

@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Gozap/certmonitor/pkg/alarm"
+
 	"github.com/Sirupsen/logrus"
 
 	"github.com/Gozap/certmonitor/pkg/monitor"
-
-	"github.com/Gozap/certmonitor/pkg/alarm"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -72,7 +72,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "certmonitor.yaml", "config file (default is certmonitor.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is certmonitor.yaml)")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "debug")
 }
 
@@ -82,14 +82,12 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		cfgFile = "certmonitor.yaml"
-		viper.Set("monitor", monitor.ExampleConfig())
-		viper.Set("alarm", alarm.ExampleConfig())
-		viper.Set("smtp", alarm.SMTPExampleConfig())
-		viper.Set("webhook", alarm.WebHookExampleConfig())
-		viper.SetConfigFile(cfgFile)
-
 		if _, err := os.Stat(cfgFile); err != nil {
 			os.Create(cfgFile)
+			viper.Set("monitor", monitor.ExampleConfig())
+			viper.Set("alarm", alarm.ExampleConfig())
+			viper.Set("smtp", alarm.SMTPExampleConfig())
+			viper.Set("webhook", alarm.WebHookExampleConfig())
 			viper.WriteConfig()
 		}
 	}

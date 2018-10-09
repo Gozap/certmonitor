@@ -22,4 +22,4 @@ clean:
 install:
 	go install
 
-.PHONY : all clean install
+.PHONY : all release docker clean install

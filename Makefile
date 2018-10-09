@@ -1,6 +1,5 @@
 BUILD_VERSION   := $(version)
 BUILD_TIME      := $(shell date "+%F %T")
-BUILD_NAME      := app_$(shell date "+%Y%m%d%H")
 COMMIT_SHA1     := $(shell git rev-parse HEAD)
 
 all:
@@ -13,8 +12,8 @@ all:
 release: all
 	ghr -u gozap -t $(GITHUB_RELEASE_TOKEN) -replace -recreate --debug $(version) dist
 
-docker: release
-	docker build --build-arg="VERSION=$(version)" -t gozap/certmonitor:$(version) .
+docker: all
+	docker build -t gozap/certmonitor:$(version) .
 
 clean:
 	rm -rf dist

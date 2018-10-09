@@ -7,7 +7,7 @@ ARG TZ="Asia/Shanghai"
 ENV TZ ${TZ}
 
 RUN apk upgrade \
-    && apk add bash tzdata libc6-compat ca-certificate \
+    && apk add bash tzdata libc6-compat ca-certificates \
     && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
     && echo ${TZ} > /etc/timezone \
     && rm -rf /var/cache/apk/*

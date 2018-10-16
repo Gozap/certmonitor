@@ -38,6 +38,7 @@ type Config struct {
 	WebSites   []string
 	Cron       string
 	BeforeTime time.Duration
+	TimeOut    time.Duration
 }
 
 func ExampleConfig() Config {
@@ -48,17 +49,21 @@ func ExampleConfig() Config {
 		},
 		Cron:       "@every 1h",
 		BeforeTime: 7 * 24 * time.Hour,
+		TimeOut:    10 * time.Second,
 	}
 }
 
-func check(address string, beforeTime time.Duration) error {
+func check(address string, beforeTime, timeout time.Duration) error {
 
 	logrus.Infof("Check website [%s]...", address)
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	client := &http.Client{Transport: tr}
+	client := &http.Client{
+		Transport: tr,
+		Timeout:   timeout,
+	}
 	resp, err := client.Get(address)
 	if !utils.CheckErr(err) {
 		return err
@@ -90,7 +95,7 @@ func Start() {
 	for _, website := range config.WebSites {
 		addr := website
 		c.AddFunc(config.Cron, func() {
-			err := check(addr, config.BeforeTime)
+			err := check(addr, config.BeforeTime, config.TimeOut)
 			if err != nil {
 				alarm.Alarm(err.Error())
 			}

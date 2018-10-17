@@ -18,7 +18,6 @@ package monitor
 
 import (
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -41,6 +40,20 @@ type Config struct {
 	TimeOut    time.Duration
 }
 
+type WebSiteError struct {
+	Message string
+}
+
+func (e *WebSiteError) Error() string {
+	return e.Message
+}
+
+func NewWebSiteError(msg string) *WebSiteError {
+	return &WebSiteError{
+		Message: msg,
+	}
+}
+
 func ExampleConfig() Config {
 	return Config{
 		WebSites: []string{
@@ -53,7 +66,7 @@ func ExampleConfig() Config {
 	}
 }
 
-func check(address string, beforeTime, timeout time.Duration) error {
+func check(address string, beforeTime, timeout time.Duration) *WebSiteError {
 
 	logrus.Infof("Check website [%s]...", address)
 
@@ -66,17 +79,17 @@ func check(address string, beforeTime, timeout time.Duration) error {
 	}
 	resp, err := client.Get(address)
 	if !utils.CheckErr(err) {
-		return err
+		return nil
 	}
 	defer resp.Body.Close()
 
 	for _, cert := range resp.TLS.PeerCertificates {
 		if !cert.NotAfter.After(time.Now()) {
-			return errors.New(fmt.Sprintf("Website [%s] certificate has expired: %s", address, cert.NotAfter.Local().Format("2006-01-02 15:04:05")))
+			return NewWebSiteError(fmt.Sprintf("Website [%s] certificate has expired: %s", address, cert.NotAfter.Local().Format("2006-01-02 15:04:05")))
 		}
 
 		if cert.NotAfter.Sub(time.Now()) < beforeTime {
-			return errors.New(fmt.Sprintf("Website [%s] certificate will expire, remaining time: %fh", address, cert.NotAfter.Sub(time.Now()).Hours()))
+			return NewWebSiteError(fmt.Sprintf("Website [%s] certificate will expire, remaining time: %fh", address, cert.NotAfter.Sub(time.Now()).Hours()))
 		}
 	}
 

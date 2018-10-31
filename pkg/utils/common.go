@@ -16,7 +16,7 @@
 
 package utils
 
-import "github.com/Sirupsen/logrus"
+import "github.com/sirupsen/logrus"
 
 func CheckErr(err error) bool {
 	if err != nil {

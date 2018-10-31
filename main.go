@@ -16,7 +16,7 @@
 
 package main
 
-import "github.com/Gozap/certmonitor/cmd"
+import "github.com/gozap/certmonitor/cmd"
 
 func main() {
 	cmd.Execute()

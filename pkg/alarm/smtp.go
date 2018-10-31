@@ -24,7 +24,7 @@ import (
 	"net"
 	"net/mail"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 type SMTPConfig struct {

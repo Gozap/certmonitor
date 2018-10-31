@@ -22,15 +22,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Gozap/certmonitor/pkg/alarm"
+	"github.com/gozap/certmonitor/pkg/alarm"
 
 	"github.com/robfig/cron"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/viper"
 
-	"github.com/Gozap/certmonitor/pkg/utils"
+	"github.com/gozap/certmonitor/pkg/utils"
 )
 
 type Config struct {

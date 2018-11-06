@@ -1,4 +1,3 @@
-GO111MODULE     := on
 BUILD_VERSION   := $(version)
 BUILD_TIME      := $(shell date "+%F %T")
 COMMIT_SHA1     := $(shell git rev-parse HEAD)
@@ -23,3 +22,7 @@ install:
 	go install
 
 .PHONY : all release docker clean install
+
+.EXPORT_ALL_VARIABLES:
+
+GO111MODULE = on

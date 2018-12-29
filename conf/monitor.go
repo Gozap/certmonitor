@@ -18,13 +18,17 @@ package conf
 
 import "time"
 
+var Monitor MonitorConfig
+
 type WebsiteConfig struct {
-	Domain    string `yaml:"domain" mapstructure:"domain"`
-	Command   string `yaml:"command" mapstructure:"command"`
-	AutoRenew bool   `yaml:"auto_renew" mapstructure:"auto_renew"`
+	Domain      string `yaml:"domain" mapstructure:"domain"`
+	Command     string `yaml:"command" mapstructure:"command"`
+	AutoRenew   bool   `yaml:"auto_renew" mapstructure:"auto_renew"`
+	DNSProvider string `yaml:"dns_provider" mapstructure:"dns_provider"`
 }
 
 type MonitorConfig struct {
+	Debug      bool            `yaml:"debug" mapstructure:"debug"`
 	Websites   []WebsiteConfig `yaml:"websites" mapstructure:"websites"`
 	Cron       string          `yaml:"cron" mapstructure:"cron"`
 	BeforeTime time.Duration   `yaml:"before_time" mapstructure:"before_time"`

@@ -17,10 +17,9 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
-	"github.com/gozap/certmonitor/alarm"
+	"github.com/gozap/certmonitor/conf"
 
 	"github.com/sirupsen/logrus"
 
@@ -31,7 +30,6 @@ import (
 )
 
 var cfgFile string
-var debug bool
 
 var (
 	Version   string
@@ -51,12 +49,8 @@ A simple website certificate monitor tool.`,
 			TimestampFormat: "2006-01-02 15:04:05",
 		})
 
-		if debug {
-			logrus.SetLevel(logrus.DebugLevel)
-		}
-
 		if len(args) > 0 {
-			cmd.Help()
+			_ = cmd.Help()
 			return
 		}
 		monitor.Start()
@@ -65,30 +59,49 @@ A simple website certificate monitor tool.`,
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		logrus.Panic(err)
 	}
 }
 
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "certmonitor.yaml", "config file (default is certmonitor.yaml)")
-	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "debug")
 }
 
 func initConfig() {
 
 	viper.SetConfigFile(cfgFile)
 
-	if _, err := os.Stat(cfgFile); err != nil {
-		os.Create(cfgFile)
-		viper.Set("monitor", monitor.ExampleConfig())
-		viper.Set("alarm", alarm.ExampleConfig())
-		viper.Set("smtp", alarm.SMTPExampleConfig())
-		viper.Set("webhook", alarm.WebHookExampleConfig())
-		viper.WriteConfig()
+	if _, err := os.Stat(cfgFile); os.IsNotExist(err) {
+		_, err = os.Create(cfgFile)
+		if err != nil {
+			logrus.Panic(err)
+		}
+		viper.Set("monitor", conf.MonitorExampleConfig())
+		viper.Set("alarm", conf.AlarmExampleConfig())
+		viper.Set("acme", conf.ACMEExampleConfig())
+		err = viper.WriteConfig()
+		if err != nil {
+			logrus.Panic(err)
+		}
 	}
 
 	viper.AutomaticEnv()
-	viper.ReadInConfig()
+	err := viper.ReadInConfig()
+	if err != nil {
+		logrus.Panic(err)
+	}
+
+	err = viper.UnmarshalKey("monitor", &conf.Monitor)
+	if err != nil {
+		logrus.Panic(err)
+	}
+	err = viper.UnmarshalKey("alarm", &conf.Alarm)
+	if err != nil {
+		logrus.Panic(err)
+	}
+	err = viper.UnmarshalKey("acme", &conf.ACME)
+	if err != nil {
+		logrus.Panic(err)
+	}
 }

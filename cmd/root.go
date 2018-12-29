@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gozap/certmonitor/pkg/alarm"
+	"github.com/gozap/certmonitor/alarm"
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/gozap/certmonitor/pkg/monitor"
+	"github.com/gozap/certmonitor/monitor"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

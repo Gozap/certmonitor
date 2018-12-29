@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gozap/certmonitor/pkg/alarm"
+	"github.com/gozap/certmonitor/alarm"
 
 	"github.com/robfig/cron"
 
@@ -30,7 +30,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/gozap/certmonitor/pkg/utils"
+	"github.com/gozap/certmonitor/utils"
 )
 
 type Config struct {

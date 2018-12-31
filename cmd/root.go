@@ -49,6 +49,10 @@ A simple website certificate monitor tool.`,
 			TimestampFormat: "2006-01-02 15:04:05",
 		})
 
+		if conf.Monitor.Debug {
+			logrus.SetLevel(logrus.DebugLevel)
+		}
+
 		if len(args) > 0 {
 			_ = cmd.Help()
 			return

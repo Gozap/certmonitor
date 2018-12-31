@@ -19,7 +19,7 @@ package conf
 var Alarm AlarmConfig
 
 type SMTPAlarmConfig struct {
-	Username string   `yaml:"username" mapstructure:"username"`
+	User     string   `yaml:"user" mapstructure:"user"`
 	Password string   `yaml:"password" mapstructure:"password"`
 	From     string   `yaml:"from" mapstructure:"from"`
 	Server   string   `yaml:"server" mapstructure:"server"`
@@ -40,7 +40,7 @@ type AlarmConfig struct {
 func AlarmExampleConfig() AlarmConfig {
 	return AlarmConfig{
 		SMTP: SMTPAlarmConfig{
-			Username: "mritd",
+			User:     "mritd",
 			Password: "password",
 			From:     "mritd@mritd.me",
 			Server:   "smtp.qq.com:465",

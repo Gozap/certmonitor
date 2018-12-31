@@ -30,13 +30,6 @@ type WebHookConfig struct {
 	TimeOut time.Duration `yml:"timeout"`
 }
 
-func WebHookExampleConfig() *WebHookConfig {
-	return &WebHookConfig{
-		Method:  "get",
-		TimeOut: 5 * time.Second,
-	}
-}
-
 func (cfg *WebHookConfig) Send(targets []string, message string) {
 	timeout := time.Duration(cfg.TimeOut)
 	c := http.Client{
@@ -49,7 +42,7 @@ func (cfg *WebHookConfig) Send(targets []string, message string) {
 		case "get":
 			cfg.get(c, t, message)
 		default:
-			logrus.Print("Method not support!")
+			logrus.Error("Method not support!")
 		}
 	}
 }

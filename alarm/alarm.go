@@ -17,43 +17,70 @@
 package alarm
 
 import (
+	"bytes"
 	"strings"
+	"text/template"
+	"time"
+
+	"github.com/gozap/certmonitor/conf"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
-func Alarm(message string) {
+func Alarm(website conf.WebsiteConfig, err error) {
 
-	logrus.Debugf("Website alarm: %s", message)
-
-	var alarm []Config
-	err := viper.UnmarshalKey("alarm", &alarm)
-	if err != nil {
-		logrus.Printf("Can't parse alarm config: %s", err)
-		return
+	logrus.Debugf("Website alarm: %s", err.Error())
+	switch strings.ToLower(conf.Monitor.AlarmType) {
+	case "all":
+		smtpAlarm(website, err)
+		webhooksAlarm(website, err)
+	case "smtp":
+		smtpAlarm(website, err)
+	case "webhook":
+		webhooksAlarm(website, err)
+	default:
+		logrus.Error("Alarm type not support!")
 	}
-	for _, a := range alarm {
-		switch strings.ToLower(a.Type) {
-		case "smtp":
-			var s SMTPConfig
-			err := viper.UnmarshalKey("smtp", &s)
-			if err != nil {
-				logrus.Printf("Can't parse smtp config: %s", err)
-				return
-			}
-			s.Send(a.Targets, message)
-		case "webhook":
-			var w WebHookConfig
-			err := viper.UnmarshalKey("webhook", &w)
-			if err != nil {
-				logrus.Printf("Can't parse webhook config: %s", err)
-				return
-			}
-			w.Send(a.Targets, message)
-		default:
-			logrus.Print("Alarm type not support!")
+}
 
+func smtpAlarm(_ conf.WebsiteConfig, err error) {
+	config := SMTPConfig{
+		User:     conf.Alarm.SMTP.User,
+		Password: conf.Alarm.SMTP.Password,
+		Server:   conf.Alarm.SMTP.Server,
+		From:     conf.Alarm.SMTP.From,
+	}
+	config.Send(conf.Alarm.SMTP.Targets, err.Error())
+}
+
+func webhooksAlarm(website conf.WebsiteConfig, err error) {
+
+	for _, cfg := range conf.Alarm.HTTP {
+
+		var targets []string
+		config := WebHookConfig{
+			Method:  strings.ToLower(cfg.Method),
+			TimeOut: 5 * time.Second,
 		}
+		if cfg.NeedParse {
+			for _, addr := range cfg.Targets {
+				t, err := template.New("").Parse(addr)
+				if err != nil {
+					logrus.Error(err)
+					continue
+				}
+				var buf bytes.Buffer
+				err = t.Execute(&buf, website)
+				if err != nil {
+					logrus.Error(err)
+					continue
+				}
+				targets = append(targets, buf.String())
+			}
+		} else {
+			targets = cfg.Targets
+		}
+		config.Send(targets, err.Error())
 	}
+
 }

@@ -18,6 +18,7 @@ package monitor
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -43,21 +44,7 @@ type Config struct {
 	TimeOut    time.Duration
 }
 
-type WebSiteError struct {
-	Message string
-}
-
-func (e *WebSiteError) Error() string {
-	return e.Message
-}
-
-func NewWebSiteError(msg string) *WebSiteError {
-	return &WebSiteError{
-		Message: msg,
-	}
-}
-
-func check(address string, beforeTime, timeout time.Duration) *WebSiteError {
+func check(address string, beforeTime, timeout time.Duration) error {
 
 	logrus.Infof("Check website [%s]...", address)
 
@@ -76,11 +63,11 @@ func check(address string, beforeTime, timeout time.Duration) *WebSiteError {
 
 	for _, cert := range resp.TLS.PeerCertificates {
 		if !cert.NotAfter.After(time.Now()) {
-			return NewWebSiteError(fmt.Sprintf("Website [%s] certificate has expired: %s", address, cert.NotAfter.Local().Format("2006-01-02 15:04:05")))
+			return errors.New(fmt.Sprintf("Website [%s] certificate has expired: %s", address, cert.NotAfter.Local().Format("2006-01-02 15:04:05")))
 		}
 
 		if cert.NotAfter.Sub(time.Now()) < beforeTime {
-			return NewWebSiteError(fmt.Sprintf("Website [%s] certificate will expire, remaining time: %fh", address, cert.NotAfter.Sub(time.Now()).Hours()))
+			return errors.New(fmt.Sprintf("Website [%s] certificate will expire, remaining time: %fh", address, cert.NotAfter.Sub(time.Now()).Hours()))
 		}
 	}
 
@@ -95,11 +82,11 @@ func Start() {
 		c.AddFunc(conf.Monitor.Cron, func() {
 			err := check(w.Domain, conf.Monitor.BeforeTime, conf.Monitor.HttpTimeout)
 			if err != nil {
-				alarm.Alarm(err.Error())
+				alarm.Alarm(w, err)
 				if w.AutoRenew {
 					err := ReNew(w)
 					if err != nil {
-						alarm.Alarm(fmt.Sprintf("Website [%s] auto renew failed: %s", w.Domain, err.Error()))
+						alarm.Alarm(w, errors.New(fmt.Sprintf("Website [%s] auto renew failed: %s", w.Domain, err.Error())))
 					} else {
 						cmds := strings.Fields(w.Command)
 						if len(cmds) < 1 {
@@ -110,7 +97,7 @@ func Start() {
 						cmd.Stderr = os.Stderr
 						b, err := cmd.Output()
 						if err != nil {
-							alarm.Alarm(fmt.Sprintf("Website [%s] command exec failed: %s: %s", w.Domain, err.Error(), string(b)))
+							alarm.Alarm(w, errors.New(fmt.Sprintf("Website [%s] command exec failed: %s: %s", w.Domain, err.Error(), string(b))))
 						}
 					}
 				}

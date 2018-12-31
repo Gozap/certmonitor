@@ -28,19 +28,10 @@ import (
 )
 
 type SMTPConfig struct {
-	Username string `yml:"username"`
-	Password string `yml:"password"`
-	From     string `yml:"from"`
-	Server   string `yml:"Server"`
-}
-
-func SMTPExampleConfig() *SMTPConfig {
-	return &SMTPConfig{
-		Username: "mritd",
-		Password: "password",
-		From:     "mritd@mritd.me",
-		Server:   "smtp.qq.com:465",
-	}
+	User     string
+	Password string
+	From     string
+	Server   string
 }
 
 func (cfg *SMTPConfig) Send(targets []string, message string) {
@@ -113,14 +104,14 @@ func (cfg *SMTPConfig) sendEmail(toAddr string, body string) (err error) {
 		return
 	}
 	// Set up authentication information.
-	auth := smtp.PlainAuth("", cfg.Username, cfg.Password, host)
+	auth := smtp.PlainAuth("", cfg.User, cfg.Password, host)
 	// auth the smtp client
 	err = smtpClient.Auth(auth)
 	if err != nil {
 		return
 	}
 	// set To && From address, note that from address must be same as authorization user.
-	from := mail.Address{Address: cfg.Username}
+	from := mail.Address{Address: cfg.User}
 	to := mail.Address{Address: toAddr}
 	err = smtpClient.Mail(from.Address)
 	if err != nil {

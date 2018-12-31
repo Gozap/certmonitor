@@ -108,7 +108,6 @@ func ReNew(website conf.WebsiteConfig) error {
 		}
 
 	case "godaddy":
-
 		godaddyConfig := godaddy.NewDefaultConfig()
 		godaddyConfig.APIKey = providerConfig.APIKey
 		godaddyConfig.APISecret = providerConfig.APISecret

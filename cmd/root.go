@@ -59,7 +59,7 @@ A simple website certificate monitor tool.`,
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		logrus.Panic(err)
+		logrus.Info(err)
 	}
 }
 

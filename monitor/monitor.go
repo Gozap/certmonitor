@@ -20,15 +20,18 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"os"
+	"os/exec"
+	"strings"
 	"time"
+
+	"github.com/gozap/certmonitor/conf"
 
 	"github.com/gozap/certmonitor/alarm"
 
 	"github.com/robfig/cron"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/spf13/viper"
 
 	"github.com/gozap/certmonitor/utils"
 )
@@ -51,18 +54,6 @@ func (e *WebSiteError) Error() string {
 func NewWebSiteError(msg string) *WebSiteError {
 	return &WebSiteError{
 		Message: msg,
-	}
-}
-
-func ExampleConfig() Config {
-	return Config{
-		WebSites: []string{
-			"https://google.com",
-			"https://mritd.me",
-		},
-		Cron:       "@every 1h",
-		BeforeTime: 7 * 24 * time.Hour,
-		TimeOut:    10 * time.Second,
 	}
 }
 
@@ -97,20 +88,33 @@ func check(address string, beforeTime, timeout time.Duration) *WebSiteError {
 }
 
 func Start() {
-	var config Config
-	err := viper.UnmarshalKey("monitor", &config)
-	if err != nil {
-		logrus.Fatalf("Can't parse server config: %s", err)
-	}
-
 	c := cron.New()
 
-	for _, website := range config.WebSites {
-		addr := website
-		c.AddFunc(config.Cron, func() {
-			err := check(addr, config.BeforeTime, config.TimeOut)
+	for _, website := range conf.Monitor.Websites {
+		w := website
+		c.AddFunc(conf.Monitor.Cron, func() {
+			err := check(w.Domain, conf.Monitor.BeforeTime, conf.Monitor.HttpTimeout)
 			if err != nil {
 				alarm.Alarm(err.Error())
+				if w.AutoRenew {
+					err := ReNew(w)
+					if err != nil {
+						alarm.Alarm(fmt.Sprintf("Website [%s] auto renew failed: %s", w.Domain, err.Error()))
+					} else {
+
+						cmds := strings.Fields(w.Command)
+						if len(cmds) < 1 {
+							return
+						}
+						cmd := exec.Command(cmds[0], cmds[1:]...)
+						cmd.Stdin = os.Stdin
+						cmd.Stderr = os.Stderr
+						b, err := cmd.Output()
+						if err != nil {
+							alarm.Alarm(fmt.Sprintf("Website [%s] command exec failed: %s: %s", w.Domain, err.Error(), string(b)))
+						}
+					}
+				}
 			}
 		})
 	}

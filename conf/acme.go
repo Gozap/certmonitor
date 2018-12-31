@@ -26,12 +26,14 @@ type ACMEProviderConfig struct {
 
 type ACMEConfig struct {
 	Email     string               `yaml:"email" mapstructure:"email"`
+	CertDir   string               `yaml:"cert_dir" mapstructure:"cert_dir"`
 	Providers []ACMEProviderConfig `yaml:"providers" mapstructure:"providers"`
 }
 
 func ACMEExampleConfig() ACMEConfig {
 	return ACMEConfig{
-		Email: "mritd@mritd.me",
+		Email:   "mritd@mritd.me",
+		CertDir: "certs",
 		Providers: []ACMEProviderConfig{
 			{
 				Name:      "godaddy",

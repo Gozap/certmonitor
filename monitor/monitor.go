@@ -101,7 +101,6 @@ func Start() {
 					if err != nil {
 						alarm.Alarm(fmt.Sprintf("Website [%s] auto renew failed: %s", w.Domain, err.Error()))
 					} else {
-
 						cmds := strings.Fields(w.Command)
 						if len(cmds) < 1 {
 							return

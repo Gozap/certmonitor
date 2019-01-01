@@ -57,6 +57,7 @@ A simple website certificate monitor tool.`,
 			_ = cmd.Help()
 			return
 		}
+		monitor.ACMEInit()
 		monitor.Start()
 	},
 }

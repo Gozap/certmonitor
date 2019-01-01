@@ -46,7 +46,7 @@ type Config struct {
 
 func check(address string, beforeTime, timeout time.Duration) error {
 
-	logrus.Infof("Check website [%s]...", address)
+	logrus.Infof("check website [%s]...", address)
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -63,12 +63,33 @@ func check(address string, beforeTime, timeout time.Duration) error {
 
 	for _, cert := range resp.TLS.PeerCertificates {
 		if !cert.NotAfter.After(time.Now()) {
-			return errors.New(fmt.Sprintf("Website [%s] certificate has expired: %s", address, cert.NotAfter.Local().Format("2006-01-02 15:04:05")))
+			return errors.New(fmt.Sprintf("website [%s] certificate has expired: %s", address, cert.NotAfter.Local().Format("2006-01-02 15:04:05")))
 		}
 
 		if cert.NotAfter.Sub(time.Now()) < beforeTime {
-			return errors.New(fmt.Sprintf("Website [%s] certificate will expire, remaining time: %fh", address, cert.NotAfter.Sub(time.Now()).Hours()))
+			return errors.New(fmt.Sprintf("website [%s] certificate will expire, remaining time: %fh", address, cert.NotAfter.Sub(time.Now()).Hours()))
 		}
+	}
+
+	return nil
+}
+
+func renew(w conf.WebsiteConfig) error {
+	err := acmeRenew(w)
+	if err != nil {
+		return errors.New(fmt.Sprintf("website [%s] auto renew failed: %s", w.Domain, err.Error()))
+	}
+	cmds := strings.Fields(w.Command)
+	if len(cmds) < 1 {
+		return nil
+	}
+	logrus.Infof("exec command [%s]", w.Command)
+	cmd := exec.Command(cmds[0], cmds[1:]...)
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	b, err := cmd.Output()
+	if err != nil {
+		return errors.New(fmt.Sprintf("website [%s] command exec failed: %s: %s", w.Domain, err.Error(), string(b)))
 	}
 
 	return nil
@@ -79,26 +100,15 @@ func Start() {
 
 	for _, website := range conf.Monitor.Websites {
 		w := website
+		logrus.Infof("add website [%s] monitor task", w.Domain)
 		c.AddFunc(conf.Monitor.Cron, func() {
-			err := check(w.Domain, conf.Monitor.BeforeTime, conf.Monitor.HttpTimeout)
+			err := check("https://"+w.Domain, conf.Monitor.BeforeTime, conf.Monitor.HttpTimeout)
 			if err != nil {
 				alarm.Alarm(w, err)
 				if w.AutoRenew {
-					err := ReNew(w)
+					err := renew(w)
 					if err != nil {
-						alarm.Alarm(w, errors.New(fmt.Sprintf("Website [%s] auto renew failed: %s", w.Domain, err.Error())))
-					} else {
-						cmds := strings.Fields(w.Command)
-						if len(cmds) < 1 {
-							return
-						}
-						cmd := exec.Command(cmds[0], cmds[1:]...)
-						cmd.Stdin = os.Stdin
-						cmd.Stderr = os.Stderr
-						b, err := cmd.Output()
-						if err != nil {
-							alarm.Alarm(w, errors.New(fmt.Sprintf("Website [%s] command exec failed: %s: %s", w.Domain, err.Error(), string(b))))
-						}
+						alarm.Alarm(w, err)
 					}
 				}
 			}

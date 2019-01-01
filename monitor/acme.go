@@ -21,13 +21,16 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/x509"
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -65,7 +68,40 @@ func (u *ACMEUser) GetPrivateKey() crypto.PrivateKey {
 
 var acmeOnce sync.Once
 
-func ReNew(website conf.WebsiteConfig) error {
+func acmeRenew(website conf.WebsiteConfig) error {
+
+	// parse domain
+	var domain string
+	var domains []string
+	domainArr := strings.Split(website.Domain, ".")
+	if len(domainArr) >= 2 {
+		domain = domainArr[len(domainArr)-2] + "." + domainArr[len(domainArr)-1]
+		domains = append(domains, domain, "*."+domain)
+	} else {
+		return errors.New(fmt.Sprintf("parse domain [%s] error", website.Domain))
+	}
+
+	certFileName := domain + ".cer"
+	privateKeyFileName := domain + ".key"
+	IssuerFileName := domain + ".issuer.cer"
+
+	// check cert exist
+	if _, err := os.Stat(filepath.Join(conf.ACME.CertDir, certFileName)); err == nil {
+		buf, err := ioutil.ReadFile(filepath.Join(conf.ACME.CertDir, certFileName))
+		if err != nil {
+			return errors.New(fmt.Sprintf("open [%s] failed: %s", filepath.Join(conf.ACME.CertDir, certFileName), err.Error()))
+		}
+		p, _ := pem.Decode([]byte(buf))
+		cert, err := x509.ParseCertificate(p.Bytes)
+		if err != nil {
+			return errors.New(fmt.Sprintf("parse cert [%s] failed: %s", filepath.Join(conf.ACME.CertDir, certFileName), err.Error()))
+		}
+		// check cert validity
+		if cert.NotAfter.Sub(time.Now()) > conf.Monitor.BeforeTime {
+			logrus.Warnf("website [%s] already renew, skip!", domain)
+			return nil
+		}
+	}
 
 	// Create a user. New accounts need an email and private key to start.
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
@@ -136,17 +172,6 @@ func ReNew(website conf.WebsiteConfig) error {
 	}
 	acmeUser.Registration = reg
 
-	// parse domain
-	var domain string
-	var domains []string
-	domainArr := strings.Split(website.Domain, ".")
-	if len(domainArr) >= 2 {
-		domain = domainArr[len(domainArr)-2] + "." + domainArr[len(domainArr)-1]
-		domains = append(domains, domain, "*."+domain)
-	} else {
-		return errors.New(fmt.Sprintf("parse domain [%s] error", website.Domain))
-	}
-
 	// create request
 	request := certificate.ObtainRequest{
 		Domains: domains,
@@ -160,56 +185,19 @@ func ReNew(website conf.WebsiteConfig) error {
 	}
 
 	// save cert
-	baseName := strings.Replace(domain, ".", "-", -1)
-	certFileName := baseName + ".cer"
-	csrFileName := baseName + ".csr"
-	privateKeyFileName := baseName + ".key"
-	CAFileName := baseName + "-ca.cer"
-
-	// create files
-	certFile, err := os.OpenFile(filepath.Join(conf.ACME.CertDir, certFileName), os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+	err = ioutil.WriteFile(filepath.Join(conf.ACME.CertDir, certFileName), certificates.Certificate, 0600)
 	if err != nil {
 		return err
 	}
-
-	csrFile, err := os.OpenFile(filepath.Join(conf.ACME.CertDir, csrFileName), os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+	err = ioutil.WriteFile(filepath.Join(conf.ACME.CertDir, privateKeyFileName), certificates.PrivateKey, 0600)
 	if err != nil {
 		return err
 	}
-
-	privateKeyFile, err := os.OpenFile(filepath.Join(conf.ACME.CertDir, privateKeyFileName), os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+	err = ioutil.WriteFile(filepath.Join(conf.ACME.CertDir, IssuerFileName), certificates.IssuerCertificate, 0600)
 	if err != nil {
 		return err
 	}
-
-	CAFile, err := os.OpenFile(filepath.Join(conf.ACME.CertDir, CAFileName), os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
-	if err != nil {
-		return err
-	}
-
-	// save to file
-	err = pem.Encode(certFile, &pem.Block{Type: "CERTIFICATE", Bytes: certificates.Certificate})
-	if err != nil {
-		return err
-	}
-
-	err = pem.Encode(csrFile, &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: certificates.CSR})
-	if err != nil {
-		return err
-	}
-
-	err = pem.Encode(privateKeyFile, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: certificates.PrivateKey})
-	if err != nil {
-		return err
-	}
-
-	err = pem.Encode(CAFile, &pem.Block{Type: "CERTIFICATE", Bytes: certificates.IssuerCertificate})
-	if err != nil {
-		return err
-	}
-
 	return nil
-
 }
 
 func ACMEInit() {

@@ -75,8 +75,10 @@ func acmeRenew(website conf.WebsiteConfig) error {
 	var domains []string
 	domainArr := strings.Split(website.Domain, ".")
 	if len(domainArr) >= 2 {
+		// example.com
 		domain = domainArr[len(domainArr)-2] + "." + domainArr[len(domainArr)-1]
-		domains = append(domains, domain, "*."+domain)
+		// example.com *.example.com *.test.example.com
+		domains = append(domains, domain, "*."+domain, "*."+strings.Join(domainArr[1:], "."))
 	} else {
 		return errors.New(fmt.Sprintf("parse domain [%s] error", website.Domain))
 	}
@@ -133,7 +135,14 @@ func acmeRenew(website conf.WebsiteConfig) error {
 		}
 	}
 
-	switch website.DNSProvider {
+	dnsProvider := ""
+	for _, p := range conf.ACME.Providers {
+		if p.Type == website.DNSProvider {
+			dnsProvider = p.Type
+		}
+	}
+
+	switch dnsProvider {
 	case "alidns":
 		alidnsConfig := alidns.NewDefaultConfig()
 		alidnsConfig.APIKey = providerConfig.APIKey

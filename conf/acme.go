@@ -20,6 +20,7 @@ var ACME ACMEConfig
 
 type ACMEProviderConfig struct {
 	Name      string `yaml:"name" mapstructure:"name"`
+	Type      string `yaml:"type" mapstructure:"type"`
 	APIKey    string `yaml:"api_key" mapstructure:"api_key"`
 	APISecret string `yaml:"api_secret" mapstructure:"api_secret"`
 }
@@ -37,11 +38,13 @@ func ACMEExampleConfig() ACMEConfig {
 		Providers: []ACMEProviderConfig{
 			{
 				Name:      "godaddy",
+				Type:      "godaddy",
 				APIKey:    "e7UFaqWtRfMcPvvosuDqFYkQNVmkEWNY",
 				APISecret: "XjfmmniwA3tyHYRLjTCXFcBTGRxFTpYU",
 			},
 			{
 				Name:      "alidns",
+				Type:      "alidns",
 				APIKey:    "CVYGfcEJBjgzGuNFbyUXYkj7QpLqMGfM",
 				APISecret: "hTeQbsdAkXGTsPVJpsdzUE7RjaYtXAym",
 			},

@@ -23,11 +23,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	Version   string
+	BuildDate string
+	CommitID  string
+)
+
 var versionTpl = `
 Name: certmonitor
 Version: %s
 Arch: %s
-BuildTime: %s
+BuildDate: %s
 CommitID: %s
 `
 
@@ -37,7 +43,7 @@ var versionCmd = &cobra.Command{
 	Long: `
 Print version.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf(versionTpl, Version, runtime.GOOS+"/"+runtime.GOARCH, BuildTime, CommitID)
+		fmt.Printf(versionTpl, Version, runtime.GOOS+"/"+runtime.GOARCH, BuildDate, CommitID)
 	},
 }
 

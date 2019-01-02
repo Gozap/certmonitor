@@ -30,13 +30,6 @@ import (
 )
 
 var cfgFile string
-
-var (
-	Version   string
-	BuildTime string
-	CommitID  string
-)
-
 var rootCmd = &cobra.Command{
 	Use:   "certmonitor",
 	Short: "A simple website certificate monitor tool",

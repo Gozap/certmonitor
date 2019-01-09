@@ -137,7 +137,7 @@ func acmeRenew(website conf.WebsiteConfig) error {
 
 	dnsProvider := ""
 	for _, p := range conf.ACME.Providers {
-		if p.Type == website.DNSProvider {
+		if p.Name == website.DNSProvider {
 			dnsProvider = p.Type
 		}
 	}

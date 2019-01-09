@@ -139,6 +139,6 @@ func (cfg *SMTPConfig) sendEmail(toAddr string, body string) (err error) {
 		return
 	}
 	// Quit sends the QUIT command and closes the connection to the server.
-	smtpClient.Quit()
+	_ = smtpClient.Quit()
 	return nil
 }

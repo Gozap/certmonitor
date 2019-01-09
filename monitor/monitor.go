@@ -59,7 +59,9 @@ func check(address string, beforeTime, timeout time.Duration) error {
 	if !utils.CheckErr(err) {
 		return nil
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	for _, cert := range resp.TLS.PeerCertificates {
 		if !cert.NotAfter.After(time.Now()) {
@@ -101,7 +103,7 @@ func Start() {
 	for _, website := range conf.Monitor.Websites {
 		w := website
 		logrus.Infof("add website [%s] monitor task", w.Domain)
-		c.AddFunc(conf.Monitor.Cron, func() {
+		_ = c.AddFunc(conf.Monitor.Cron, func() {
 			err := check("https://"+w.Domain, conf.Monitor.BeforeTime, conf.Monitor.HttpTimeout)
 			if err != nil {
 				alarm.Alarm(w, err)

@@ -10,10 +10,10 @@ all:clean
                     -X 'github.com/gozap/certmonitor/cmd.CommitID=${COMMIT_SHA1}'"
 
 release: all
-	ghr -u gozap -t $(GITHUB_RELEASE_TOKEN) -replace -recreate --debug $(version) dist
+	ghr -u gozap -t ${GITHUB_RELEASE_TOKEN} -replace -recreate --debug ${BUILD_VERSION} dist
 
 docker: all
-	docker build -t gozap/certmonitor:$(version) .
+	docker build -t gozap/certmonitor:${BUILD_VERSION} .
 
 clean:
 	rm -rf dist

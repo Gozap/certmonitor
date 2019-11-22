@@ -1,8 +1,8 @@
-BUILD_VERSION   := $(version)
+BUILD_VERSION   := $(shell cat version)
 BUILD_TIME      := $(shell date "+%F %T")
 COMMIT_SHA1     := $(shell git rev-parse HEAD)
 
-all:
+all:clean
 	gox -osarch="darwin/amd64 linux/386 linux/amd64" \
         -output="dist/{{.Dir}}_{{.OS}}_{{.Arch}}" \
     	-ldflags   "-X 'github.com/gozap/certmonitor/cmd.Version=${BUILD_VERSION}' \
@@ -26,3 +26,5 @@ install:
 .EXPORT_ALL_VARIABLES:
 
 GO111MODULE = on
+GOPROXY = https://goproxy.io
+GOSUMDB = sum.golang.google.cn

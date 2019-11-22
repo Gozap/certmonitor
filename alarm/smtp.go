@@ -1,19 +1,3 @@
-/*
- * Copyright 2018 Gozap, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package alarm
 
 import (
@@ -47,7 +31,7 @@ func (cfg *SMTPConfig) Send(targets []string, message string) {
 	for _, t := range targets {
 		err := cfg.sendEmail(t, message)
 		if err != nil {
-			logrus.Printf("Email alarm send failed [%s]: %s", t, err)
+			logrus.Errorf("Email alarm send failed [%s]: %s", t, err)
 		}
 	}
 }
@@ -148,6 +132,9 @@ func (cfg *SMTPConfig) sendEmail(toAddr string, body string) (err error) {
 		return
 	}
 	// Quit sends the QUIT command and closes the connection to the server.
-	smtpClient.Quit()
+	err = smtpClient.Quit()
+	if err != nil {
+		logrus.Error(err)
+	}
 	return nil
 }
